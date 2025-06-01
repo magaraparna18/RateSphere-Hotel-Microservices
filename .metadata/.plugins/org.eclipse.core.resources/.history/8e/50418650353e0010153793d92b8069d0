@@ -1,0 +1,33 @@
+# Set the port for the API Gateway server
+server.port=8084
+
+# Name of the Spring Boot application (used for Eureka registration)
+spring.application.name=APIGateway
+
+# ========== Route Configuration for USER-SERVICE ==========
+spring.cloud.gateway.routes[0].id=USER-SERVICE
+spring.cloud.gateway.routes[0].uri=lb://USER-SERVICE
+spring.cloud.gateway.routes[0].predicates[0]=Path=/users/**
+
+# ========== Route Configuration for HOTEL-SERVICE ==========
+spring.cloud.gateway.routes[1].id=HOTEL-SERVICE
+spring.cloud.gateway.routes[1].uri=lb://HOTEL-SERVICE
+spring.cloud.gateway.routes[1].predicates[0]=Path=/hotels/**
+
+# ========== Route Configuration for RATING-SERVICE ==========
+spring.cloud.gateway.routes[2].id=RATING-SERVICE
+spring.cloud.gateway.routes[2].uri=lb://RATING-SERVICE
+spring.cloud.gateway.routes[2].predicates[0]=Path=/ratings/**
+
+# ========== Eureka Client Configuration ==========
+# URL of the Eureka server
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+
+# Register this gateway service with Eureka
+eureka.client.register-with-eureka=true
+
+# Fetch other services' information from Eureka
+eureka.client.fetch-registry=true
+
+# Use IP address for registering instead of hostname
+eureka.instance.prefer-ip-address=true

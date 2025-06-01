@@ -1,0 +1,5 @@
+package com.external.services;
+
+public class RatingService {
+
+}

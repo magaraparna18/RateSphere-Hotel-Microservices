@@ -1,0 +1,121 @@
+package com.ServiceImpl;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.entities.Hotel;
+import com.entities.Rating;
+import com.entities.User;
+import com.exception.ResourceNotFoundException;
+import com.repository.UserRepository;
+import com.services.UserService;
+
+@Service
+public class UserServiceImpl2 implements UserService {
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl2.class);
+
+    @Override
+    public User saveUser(User user) {
+        String randomUserId = UUID.randomUUID().toString();
+        user.setUserId(randomUserId);
+        return userRepo.save(user);
+    }
+
+    @Override
+    public List<User> getAllUser() {
+        List<User> users = userRepo.findAll();
+
+        // Add ratings to each user
+        for (User user : users) {
+            try {
+                ResponseEntity<List<Rating>> response = restTemplate.exchange(
+                    "http://localhost:8083/ratings/user/" + user.getUserId(),
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<List<Rating>>() {}
+                );
+
+                List<Rating> ratingsOfUser = response.getBody();
+                user.setRatings(ratingsOfUser);
+                logger.info("Fetched ratings for user {} : {}", user.getUserId(), ratingsOfUser);
+            } catch (Exception e) {
+                logger.error("Failed to fetch ratings for user {} : {}", user.getUserId(), e.getMessage());
+                user.setRatings(List.of()); // set empty list on failure
+            }
+        }
+
+        return users;
+    }
+
+    @Override
+    public User getUser(String userId) {
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User with given id is not found on server: " + userId));
+
+        ResponseEntity<List<Rating>> response = restTemplate.exchange(
+            "http://localhost:8083/ratings/user/" + user.getUserId(),
+            HttpMethod.GET,
+            null,
+            new ParameterizedTypeReference<List<Rating>>() {}
+        );
+
+        List<Rating> ratingsOfUser = response.getBody();
+        logger.info("Ratings received for user {} : {}", userId, ratingsOfUser);
+
+        //Start Form here for Hotel
+        
+       List<Rating> ratingList= ratingsOfUser.stream().map(rating->{
+        	//api call to hotel service
+    	 ResponseEntity<Hotel> forEntity=restTemplate.getForEntity("http://localhost:8082/hotels/"+rating.getHotelId(), Hotel.class);
+    	 Hotel hotel=forEntity.getBody();
+    	 logger.info("response status code: {}",forEntity.getStatusCode());
+        	//set the hotel to rating
+    	 rating.setHotel(hotel);
+        	//return the rating
+        	return rating;	
+        }).collect(Collectors.toList());
+        
+        
+        
+        user.setRatings(ratingList);
+        return user;
+    }
+
+    @Override
+    public User updateUser(String userId, User user) {
+        User existingUser = userRepo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot update. User not found with id: " + userId));
+
+        existingUser.setName(user.getName());
+        existingUser.setEmail(user.getEmail());
+        existingUser.setAbout(user.getAbout());
+
+        return userRepo.save(existingUser);
+    }
+
+    @Override
+    public void deleteUser(String userId) {
+        User user = userRepo.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("Cannot delete. User not found with id: " + userId));
+        
+        userRepo.delete(user);
+
+    }
+}    

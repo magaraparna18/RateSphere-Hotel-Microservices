@@ -1,0 +1,37 @@
+package com;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import com.entities.Rating;
+import com.external.services.RatingService;
+
+@SpringBootTest
+class UserServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+	
+	@Autowired
+	private RatingService  ratingService;
+	
+	@Test
+	public void createRating() {
+	    try {
+	        Rating rating = Rating.builder()
+	            .rating(10)
+	            .userId("user123") // try with valid values
+	            .hotelId("hotel123")
+	            .feedback("This is created using feign client")
+	            .build();
+
+	        Rating savedRating = ratingService.createRating(rating);
+	        System.out.println("new rating created: " + savedRating);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        System.err.println("Exception during createRating: " + e.getMessage());
+	    }
+	}
+}

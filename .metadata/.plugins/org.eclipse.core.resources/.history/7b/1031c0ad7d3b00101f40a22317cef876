@@ -1,0 +1,33 @@
+package com.serviceImpl;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import com.entities.Rating;
+import com.service.RatingService;
+
+@Service
+public class RatingServiceImpl implements RatingService {
+
+	@Override
+	public Rating createRating(Rating rating) {
+		return null;
+	}
+
+	@Override
+	public List<Rating> getRatings() {
+		return null;
+	}
+
+	@Override
+	public List<Rating> getRatingByUserId(String userId) {
+		return null;
+	}
+
+	@Override
+	public List<Rating> getRatingByHotelId(String hotelId) {
+		return null;
+	}
+
+}
